@@ -1,4 +1,4 @@
-#import "@preview/polylux:0.3.1": *
+#import "@preview/touying:0.5.2"
 #import "unipd.typ": *
 
 #show: unipd-theme
@@ -10,9 +10,35 @@
   date: "February 2024",
 )
 
+== Bar
+
+=== Baz
+
+#slide[
+  Altro
+]
+
+== Qux
+
+#slide[
+  - Foo
+
+  - Bar
+
+  - Baz
+
+    - Cafrax
+
+  - Qux
+
+    - Brux?
+]
+
 #new-section-slide("Introduction")
 
-#slide(title: "Static text")[
+#slide[
+  == Static text
+
   Here's some code:
 
   ```sh
@@ -23,7 +49,9 @@
   ```
 ]
 
-#slide(title: "Dynamic text")[
+#slide[
+  == Static text
+
   #lorem(20)
 
   #uncover("2-")[This appears after one slide]
@@ -31,13 +59,15 @@
 
 #new-section-slide("Conclusions")
 
-#slide(title: "Qux")[
+#slide[
+  == Qux
+
   _baz_\
   *Fizz*\
   `Fuzz`
 ]
 
-#slide()[
+#slide[
   #normal-block[Normal block][body]
   #alert-block[Alert block][body]
   #example-block[Example block][

@@ -1,163 +1,230 @@
-#import "@preview/polylux:0.3.1": logic, utils
+#import "@preview/touying:0.5.2": *
 
-#let unipd-palette = (
-  main: rgb(155, 0, 20),
-  gray: rgb(72, 79, 89),
-  light-gray: rgb(237, 237, 238),
-  header-logo: "logo_text_white.png",
-  title-background: "bg.svg",
-  background-logo: "logo_text.png",
-  footer-wave: "bg_wave.svg",
-)
+#let _header-logo = (colors, ..args) => {
+  let original = read("logo_text.svg")
+  let colored = original.replace("#B20E10", colors.neutral-lightest.to-hex())
+  image.decode(colored, ..args)
+}
 
-#let palette-state = state("unipd-theme-palette", unipd-palette)
-#let with-palette = f => locate(loc => f(palette-state.at(loc)))
+#let _footer-wave = (colors, ..args) => {
+  let original = read("bg_wave.svg")
+  let colored = original.replace("#9b0014", colors.primary.to-hex())
+  image.decode(colored, ..args)
+}
 
-#let title-background = with-palette(palette => {
-  place(image(palette.title-background, width: 100%, fit: "stretch"))
+#let _title-background = (colors, ..args) => {
+  let original = read("bg.svg")
+  let colored = original.replace("#9b0014", colors.primary.to-hex()).replace("#484f59", colors.secondary.to-hex())
+  image.decode(colored, ..args)
+}
+
+#let _background-logo = (colors, ..args) => {
+  let original = read("logo_text.svg")
+  let colored = original.replace("#B20E10", colors.primary.to-hex())
+  image.decode(colored, ..args)
+}
+
+#let _header(self) = {
+  set align(top)
+  place(rect(width: 100%, height: 100%, stroke: none, fill: self.colors.primary))
+  place(horizon + right, dx: -1.5%, _header-logo(self.colors, height: 90%))
+  place(dx: 2%, dy: 40%, text(size: 34pt, fill: self.colors.neutral-lightest, utils.display-current-heading(level: 2)))
+}
+
+#let _footer(self) = {
+  place(bottom, dy: 1%, _footer-wave(self.colors, width: 100%))
   place(
-    bottom + right, dx: -5%, dy: -5%,
-    image(palette.background-logo, height: 18%)
+    bottom + right, dx: -2.5%, dy: -25%,
+    text(
+      size: 18pt,
+      fill: self.colors.primary.lighten(50%),
+      context utils.slide-counter.display() + " / " + utils.last-slide-number
+    )
   )
+}
+
+#let slide(
+  config: (:),
+  repeat: auto,
+  setting: body => body,
+  composer: auto,
+  ..bodies,
+) = touying-slide-wrapper(self => {
+  let self = utils.merge-dicts(
+    self,
+    config-page(
+      header: _header,
+      footer: _footer,
+    ),
+  )
+  let new-setting = body => {
+    set text(fill: self.colors.neutral-darkest)
+    show: setting
+    v(1fr)
+    block(width: 100%, inset: (x: 2em), body)
+    v(2fr)
+  }
+  touying-slide(self: self, config: config, repeat: repeat, setting: new-setting, composer: composer, ..bodies)
 })
 
-#let unipd-theme(aspect-ratio: "4-3", palette: unipd-palette, body) = {
-  set page(margin: 0pt)
-  set page(paper: "presentation-" + aspect-ratio) if aspect-ratio != "16-9-extended"
-  set page(width: 1058.27pt, height: 595.28pt) if aspect-ratio == "16-9-extended"
-  
-  set text(font: "New Computer Modern Sans", size: 24pt)
-  show heading.where(level: 2): set text(fill: palette.main)
-  show heading.where(level: 2): it => it + v(1em)
-  set list(marker: text("•", fill: palette.main.darken(20%)))
+#let title-slide(
+  extra: none,
+  ..args,
+) = touying-slide-wrapper(self => {
+  let info = self.info + args.named()
+  let body = {
+    // Background
+    place(top, _title-background(self.colors, width: 100%))
+    place(
+      bottom + right, dx: -5%, dy: -5%,
+      _background-logo(self.colors, height: 18%)
+    )
 
-  palette-state.update(palette)
+    // // Normalize data
+    if type(info.subtitle) == none {
+      info.subtitle = ""
+    }
+    if type(info.authors) != array {
+      info.authors = (info.authors,)
+    }
+    if type(info.date) == none {
+      info.date = ""
+    }
+
+    set text(fill: self.colors.neutral-lightest)
+
+    // Title, subtitle, author and date
+    v(20%)
+    align(
+      center,
+      box(inset: (x: 2em), text(size: 46pt, info.title))
+    )
+
+    align(
+      center,
+      box(inset: (x: 2em), text(size: 30pt, info.subtitle))
+    )
+    v(5%)
+    // TODO: Max 2 columns, last in a single column
+    block(width: 100%, inset: (x: 2em), grid(
+      rows: (auto,),
+      columns: (1fr,) * info.authors.len(),
+      column-gutter: 2em,
+      ..info.authors.map(author => align(center, text(size: 24pt, author)))
+    ))
+    place(bottom, dx: 7.5%, dy: -30%, text(size: 24pt, info.date))
+  }
+  self = utils.merge-dicts(
+    self,
+    config-common(freeze-slide-counter: true),
+    config-page(fill: self.colors.neutral-lightest, margin: 0em),
+  )
+  touying-slide(self: self, body)
+})
+
+#let filled-slide(
+  config: (:),
+  repeat: auto,
+  setting: body => body,
+  composer: auto,
+  ..bodies,
+) = touying-slide-wrapper(self => {
+  let self = utils.merge-dicts(self, config-page(margin: 0em))
+  let new-setting = body => {
+    set text(size: 44pt, fill: self.colors.neutral-lightest)
+    show: box.with(width: 100%, height: 100%, fill: self.colors.primary)
+    show: align.with(center + horizon)
+    show: setting
+    body
+  }
+  touying-slide(self: self, config: config, repeat: repeat, setting: new-setting, composer: composer, ..bodies)
+})
+
+#let new-section(title) = heading(level: 2, depth: 2, title)
+
+#let new-section-slide(
+  config: (:),
+  repeat: auto,
+  setting: body => body,
+  composer: auto,
+  title,
+) = new-section(title) + touying-slide-wrapper(self => {
+  let self = utils.merge-dicts(
+    self,
+    config-page(
+      header: _header,
+      footer: _footer,
+    ),
+  )
+  let new-setting = body => {
+    show: align.with(center + horizon)
+    set text(size: 34pt, fill: self.colors.primary, weight: "bold")
+    show: setting
+    body
+  }
+  touying-slide(self: self, config: config, repeat: repeat, setting: new-setting, composer: composer, utils.display-current-heading(level: 2))
+})
+
+#let unipd-theme(
+  ..args,
+  body,
+) = {
+  show: touying-slides.with(
+    config-page(
+      paper: "presentation-4-3",
+      header-ascent: 0em,
+      footer-descent: 0em,
+      margin: (x: 0em, top: 12%, bottom: 12%),
+    ),
+    config-common(
+      slide-fn: slide,
+      // new-section-slide-fn: new-section-slide,
+    ),
+    config-methods(
+      init: (self: none, body) => {
+        set text(font: "New Computer Modern Sans", size: 24pt, fill: self.colors.neutral-darkest)
+        show heading.where(level: 2): set text(fill: self.colors.primary)
+        show heading.where(level: 2): it => it + v(1em)
+        set list(marker: text("•", fill: self.colors.primary.darken(20%)))
+        // show strong: self.methods.alert.with(self: self)
+
+        body
+      },
+      // alert: utils.alert-with-primary-color,
+    ),
+    config-colors(
+      primary: rgb(155, 0, 20),
+      secondary: rgb(72, 79, 89),
+      tertiary: rgb(0, 128, 0),
+      neutral-lightest: rgb("#ffffff"),
+      neutral-darkest: rgb("#000000"),
+    ),
+    ..args
+  )
+
   body
 }
 
-#let title-slide(
-  title: none,
-  subtitle: none,
-  authors: none,
-  date: none,
-) = logic.polylux-slide({
-  // Background
-  title-background
-
-  // Normalize data
-  if type(subtitle) == none {
-    subtitle = ""
-  }
-  if type(authors) != array {
-    authors = (authors,)
-  }
-  if type(date) == none {
-    date = ""
-  }
-
-  // Title, subtitle, author and date
-  v(20%)
-  align(
-    center,
-    box(inset: (x: 2em), text(size: 46pt, fill: white, title))
-  )
-  align(
-    center,
-    box(inset: (x: 2em), text(size: 30pt, fill: white, subtitle))
-  )
-  v(5%)
-  // TODO: Max 2 columns, last in a single column
-  block(width: 100%, inset: (x: 2em), grid(
-    rows: (auto,),
-    columns: (1fr,) * authors.len(),
-    column-gutter: 2em,
-    ..authors.map(author => align(center, text(size: 24pt, fill: white, author)))
-  ))
-  place(bottom, dx: 7.5%, dy: -30%, text(size: 24pt, fill: white, date))
-})
-
-#let header = with-palette(palette => {
-  place(rect(width: 100%, height: 12%, fill: palette.main))
-  place(right, dx: -2%, dy: 1%, image(palette.header-logo, height: 10%))
-  // Section name in header
-  place(dx: 2%, dy: 4.5%, text(size: 34pt, fill: white, utils.current-section))
-})
-
-#let footer = with-palette(palette => {
-  place(bottom, image(palette.footer-wave, width: 100%))
-  // Slide number in the footer
-  place(
-    bottom + right, dx: -2.5%, dy: -2.5%,
-    text(
-      size: 18pt,
-      fill: palette.main.lighten(50%),
-      logic.logical-slide.display("1 of 1", both: true)
-    )
-  )
-})
-
-#let slide(title: none, body) = logic.polylux-slide({
-  header
-  v(15%) // Space for header
-  footer
-
-  if title != none {
-    v(7%)
-    let title-text = with-palette(palette => text(palette.main, title))
-    block(
-      width: 100%, inset: (x: 4.5%, y: -.5em), breakable: false,
-      outset: 0em,
-      heading(level: 1, title-text)
-    )
-    v(.7em)
-  }
-
-  v(1fr)
-  block(width: 100%, inset: (x: 2em), body)
-  v(2fr)
-})
-
-#let new-section(title) = utils.register-section(title)
-
-#let new-section-slide(title) = logic.polylux-slide({
-  new-section(title)
-  
-  header
-  footer
-
-  set align(center + horizon)
-  let titletext = with-palette(palette => text(palette.main, title))
-  heading(level: 2, titletext)
-})
-
-#let filled-slide(content) = logic.polylux-slide(with-palette(palette => {
-  set text(size: 44pt, fill: white)
-  show: it => box(width: 100%, height: 100%, fill: palette.main, it)
-  show: it => align(center + horizon, it)
-  content
-}))
-
-
-#let (normal-block, alert-block, example-block) = {
-  let make_block_fn(mk-header-color) = (title, body) => with-palette(palette => {
+#let (alert-block, normal-block, example-block) = {
+  let make_block_fn(mk-header-color) = (title, body) => touying-fn-wrapper((self: none) => {
     show: it => align(center, it)
     show: it => box(width: 85%, it)
-    let slot = box.with(width: 100%, outset: 0em, stroke: black,)
+    let slot = box.with(width: 100%, outset: 0em, stroke: self.colors.neutral-darkest)
     stack(
       slot(
-        inset: 0.5em, fill: mk-header-color(palette),
-        align(left, heading(level: 3, text(fill: white, weight: "regular")[#title]))
+        inset: 0.5em, fill: mk-header-color(self),
+        align(left, heading(level: 3, text(fill: self.colors.neutral-lightest, weight: "regular")[#title]))
       ),
       slot(
         inset: (x: 0.6em, y: 0.75em),
-        fill: palette.light-gray, align(left, body)
+        fill: self.colors.neutral-lighter.lighten(50%), align(left, body)
       )
     )
   })
 
   (
-    make_block_fn(palette => palette.gray),
-    make_block_fn(palette => palette.main),
-    make_block_fn(_ => rgb(0, 128, 0)),
+    make_block_fn(self => self.colors.primary),
+    make_block_fn(self => self.colors.secondary),
+    make_block_fn(self => self.colors.tertiary),
   )
 }
