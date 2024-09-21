@@ -28,7 +28,7 @@
   set align(top)
   place(rect(width: 100%, height: 100%, stroke: none, fill: self.colors.primary))
   place(horizon + right, dx: -1.5%, _header-logo(self.colors, height: 90%))
-  place(dx: 2%, dy: 40%, text(size: 34pt, fill: self.colors.neutral-lightest, utils.display-current-heading(level: 2)))
+  place(horizon + left, dx: 2.5%, text(size: 46pt, fill: self.colors.neutral-lightest, utils.display-current-heading(level: 2)))
 }
 
 #let _footer(self) = {
@@ -44,6 +44,7 @@
 }
 
 #let slide(
+  title: none,
   config: (:),
   repeat: auto,
   setting: body => body,
@@ -60,8 +61,16 @@
   let new-setting = body => {
     set text(fill: self.colors.neutral-darkest)
     show: setting
-    v(1fr)
-    block(width: 100%, inset: (x: 2em), body)
+    v(2.5fr)
+    if title != none {
+      block(
+        width: 100%, inset: (x: 4.5%, y: -.5em), breakable: false,
+        outset: 0em,
+        text(size: 35pt, weight: "bold", fill: self.colors.primary, title)
+      )
+      v(.7em)
+    }
+    block(width: 100%, inset: (x: 3em), body)
     v(2fr)
   }
   touying-slide(self: self, config: config, repeat: repeat, setting: new-setting, composer: composer, ..bodies)
@@ -185,9 +194,13 @@
         set text(font: "New Computer Modern Sans", size: 24pt, fill: self.colors.neutral-darkest)
         show heading.where(level: 2): set text(fill: self.colors.primary)
         show heading.where(level: 2): it => it + v(1em)
-        set list(marker: text("•", fill: self.colors.primary.darken(20%)))
+        set list(indent: 1em, marker: text("•", fill: self.colors.primary.darken(20%)))
         // show strong: self.methods.alert.with(self: self)
 
+        body
+      },
+      cover: (self: none, body) => {
+        set text(fill: (self.colors.cover)(self))
         body
       },
       // alert: utils.alert-with-primary-color,
@@ -198,6 +211,7 @@
       tertiary: rgb(0, 128, 0),
       neutral-lightest: rgb("#ffffff"),
       neutral-darkest: rgb("#000000"),
+      cover: self => self.colors.neutral-dark.lighten(80%)
     ),
     ..args
   )
