@@ -70,7 +70,7 @@
       )
       v(.7em)
     }
-    block(width: 100%, inset: (x: 3em), body)
+    block(width: 100%, inset: (x: 3em), breakable: false, body)
     v(2fr)
   }
   touying-slide(self: self, config: config, repeat: repeat, setting: new-setting, composer: composer, ..bodies)
