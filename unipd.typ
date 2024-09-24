@@ -32,13 +32,13 @@
 }
 
 #let _footer(self) = {
-  place(bottom, dy: 1%, _footer-wave(self.colors, width: 100%))
+  place(bottom, _footer-wave(self.colors, width: 100%))
   place(
     bottom + right, dx: -2.5%, dy: -25%,
     text(
       size: 18pt,
       fill: self.colors.primary.lighten(50%),
-      context utils.slide-counter.display() + " / " + utils.last-slide-number
+      context utils.slide-counter.display() + " of " + utils.last-slide-number
     )
   )
 }
@@ -59,18 +59,17 @@
     ),
   )
   let new-setting = body => {
+    show: block.with(width: 100%, inset: (x: 3em), breakable: false)
     set text(fill: self.colors.neutral-darkest)
     show: setting
     v(2.5fr)
     if title != none {
-      block(
-        width: 100%, inset: (x: 4.5%, y: -.5em), breakable: false,
-        outset: 0em,
-        text(size: 35pt, weight: "bold", fill: self.colors.primary, title)
-      )
+      show: block.with(inset: (x: -1.5em, y: -.5em))
+      set text(size: 35pt, weight: "bold", fill: self.colors.primary)
+      title
       v(.7em)
     }
-    block(width: 100%, inset: (x: 3em), breakable: false, body)
+    body
     v(2fr)
   }
   touying-slide(self: self, config: config, repeat: repeat, setting: new-setting, composer: composer, ..bodies)
@@ -83,7 +82,7 @@
   let info = self.info + args.named()
   let body = {
     // Background
-    place(top, _title-background(self.colors, width: 100%))
+    place(top, _title-background(self.colors, width: 100.1%))
     place(
       bottom + right, dx: -5%, dy: -5%,
       _background-logo(self.colors, height: 18%)
