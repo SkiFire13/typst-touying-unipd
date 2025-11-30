@@ -3,25 +3,25 @@
 #let _header-logo = (colors, ..args) => {
   let original = read("logo_text.svg")
   let colored = original.replace("#B20E10", colors.neutral-lightest.to-hex())
-  image.decode(colored, ..args)
+  image(bytes(colored), ..args)
 }
 
 #let _footer-wave = (colors, ..args) => {
   let original = read("bg_wave.svg")
   let colored = original.replace("#9b0014", colors.primary.to-hex())
-  image.decode(colored, ..args)
+  image(bytes(colored), ..args)
 }
 
 #let _title-background = (colors, ..args) => {
   let original = read("bg.svg")
   let colored = original.replace("#9b0014", colors.primary.to-hex()).replace("#484f59", colors.secondary.to-hex())
-  image.decode(colored, ..args)
+  image(bytes(colored), ..args)
 }
 
 #let _background-logo = (colors, ..args) => {
   let original = read("logo_text.svg")
   let colored = original.replace("#B20E10", colors.primary.to-hex())
-  image.decode(colored, ..args)
+  image(bytes(colored), ..args)
 }
 
 #let _header(self) = {
